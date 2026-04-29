@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 # ============ Esquema para Entrada de Datos (POST /register) ============
@@ -12,9 +13,7 @@ class UserCreate(BaseModel):
     - Password mínimo 8 caracteres (recomendación de NIST)
     """
 
-    email: EmailStr = Field(
-        ..., description="Correo electrónico único del usuario"
-    )
+    email: EmailStr = Field(..., description="Correo electrónico único del usuario")
     password: str = Field(
         ...,
         min_length=8,

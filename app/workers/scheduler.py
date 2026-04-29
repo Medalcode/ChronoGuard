@@ -6,12 +6,14 @@ En particular, monitorea la inactividad de los usuarios y ejecuta el protocolo
 de sucesión cuando es necesario.
 """
 
+from datetime import UTC, datetime
+
 from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
+
 from app.db.database import SessionLocal
-from app.models.switch_configuration import SwitchConfiguration
 from app.models.audit_log import AuditLog
+from app.models.switch_configuration import SwitchConfiguration
 
 
 def evaluate_dead_mans_switches():
@@ -30,7 +32,7 @@ def evaluate_dead_mans_switches():
     db: Session = SessionLocal()
 
     try:
-        print(f"\n[{datetime.now(timezone.utc)}] Iniciando evaluación de Dead Man's Switches...")
+        print(f"\n[{datetime.now(UTC)}] Iniciando evaluación de Dead Man's Switches...")
 
         # Obtener todas las configuraciones de switch
         configs = db.query(SwitchConfiguration).all()
@@ -40,19 +42,12 @@ def evaluate_dead_mans_switches():
             return
 
         for config in configs:
-            days_inactive = (
-                datetime.now(timezone.utc) - config.last_active_at
-            ).days
+            days_inactive = (datetime.now(UTC) - config.last_active_at).days
 
             # ========== NIVEL 1: ALERTA TEMPRANA ==========
-            if (
-                days_inactive >= config.ping_interval_days
-                and config.status == "ACTIVE"
-            ):
-                print(
-                    f"\n📧 PING: Usuario {config.user_id} lleva {days_inactive} días inactivo"
-                )
-                print(f"   → Enviando correo de 'Estás bien?'")
+            if days_inactive >= config.ping_interval_days and config.status == "ACTIVE":
+                print(f"\n📧 PING: Usuario {config.user_id} lleva {days_inactive} días inactivo")
+                print("   → Enviando correo de 'Estás bien?'")
 
                 # Registrar en audit log
                 audit = AuditLog(
@@ -64,14 +59,11 @@ def evaluate_dead_mans_switches():
                 # TODO: Aquí irá el código para enviar correo vía SMTP
 
             # ========== NIVEL 2: TRIGGER FINAL ==========
-            elif (
-                days_inactive >= config.trigger_after_days
-                and config.status != "TRIGGERED"
-            ):
+            elif days_inactive >= config.trigger_after_days and config.status != "TRIGGERED":
                 print(
                     f"\n⚠️  CRÍTICO: Usuario {config.user_id} superó {config.trigger_after_days} días sin actividad"
                 )
-                print(f"   → ACTIVANDO protocolo de sucesión")
+                print("   → ACTIVANDO protocolo de sucesión")
 
                 # Cambiar estado a TRIGGERED
                 config.status = "TRIGGERED"
@@ -88,7 +80,7 @@ def evaluate_dead_mans_switches():
                 # TODO: Aquí irá el código para generar accesos temporales
 
         db.commit()
-        print(f"\n✅ Evaluación completada")
+        print("\n✅ Evaluación completada")
 
     except Exception as e:
         print(f"\n❌ Error durante evaluación: {str(e)}")

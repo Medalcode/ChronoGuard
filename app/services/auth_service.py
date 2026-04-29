@@ -5,16 +5,17 @@ Este módulo contiene toda la lógica de registro e inicio de sesión.
 Separa la lógica de negocio de las rutas HTTP para mantener el código limpio y testeable.
 """
 
-from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from app.models.user import User
-from app.schemas.user_schema import UserCreate, UserResponse
+from sqlalchemy.orm import Session
+
 from app.core.security import (
+    create_access_token,
+    generate_vault_salt,
     get_password_hash,
     verify_password,
-    generate_vault_salt,
-    create_access_token,
 )
+from app.models.user import User
+from app.schemas.user_schema import UserCreate, UserResponse
 
 
 class AuthService:

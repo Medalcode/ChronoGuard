@@ -8,13 +8,11 @@ Este archivo inicializa la aplicación FastAPI y configura todos los componentes
 - Tareas en segundo plano (Background Jobs)
 """
 
-from fastapi import FastAPI, APIRouter
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings
-from app.db.database import engine, Base
-from app.api.v1 import auth  # Importaremos el router cuando lo creemos
 from app.workers.scheduler import start_scheduler
 
 # ============ Crear la Aplicación FastAPI ============
@@ -67,7 +65,7 @@ async def startup_event():
     """Se ejecuta cuando la aplicación arranca."""
     start_scheduler()
     print(f"✅ {settings.PROJECT_NAME} iniciada correctamente")
-    print(f"📚 API Docs disponible en: /docs")
+    print("📚 API Docs disponible en: /docs")
     print(f"🔒 Ambiente: {settings.ENVIRONMENT}")
 
 

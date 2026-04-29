@@ -1,8 +1,9 @@
 import secrets
-from datetime import datetime, timedelta, timezone
-from typing import Union
-from passlib.context import CryptContext
+from datetime import UTC, datetime, timedelta
+
 import jwt
+from passlib.context import CryptContext
+
 from app.core.config import settings
 
 # ============ Configuración del Hashing de Contraseñas ============
@@ -47,7 +48,7 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(subject: Union[str, int]) -> str:
+def create_access_token(subject: str | int) -> str:
     """
     Genera un JSON Web Token (JWT) para la sesión del usuario.
 
@@ -57,17 +58,13 @@ def create_access_token(subject: Union[str, int]) -> str:
     Returns:
         str: Token JWT codificado.
     """
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # Payload del token: quién es (sub) y cuándo expira (exp)
     to_encode = {"exp": expire, "sub": str(subject)}
 
     # Firmamos el token con la SECRET_KEY
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
     return encoded_jwt
 

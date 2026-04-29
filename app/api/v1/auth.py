@@ -6,11 +6,11 @@ Define los endpoints REST para:
 - POST /login: Autenticarse
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.schemas.user_schema import UserCreate, UserLogin, UserResponse, Token
+from app.schemas.user_schema import Token, UserCreate, UserLogin, UserResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
@@ -96,9 +96,7 @@ def login(
     }
     ```
     """
-    user_response, access_token = AuthService.login_user(
-        user_in.email, user_in.password, db
-    )
+    user_response, access_token = AuthService.login_user(user_in.email, user_in.password, db)
 
     return {
         "access_token": access_token,
