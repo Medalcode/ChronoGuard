@@ -17,10 +17,6 @@ from app.db.database import engine, Base
 from app.api.v1 import auth  # Importaremos el router cuando lo creemos
 from app.workers.scheduler import start_scheduler
 
-# ============ Crear Tablas en PostgreSQL ============
-# Esto ejecuta los CREATE TABLE para todos los modelos heredados de Base
-Base.metadata.create_all(bind=engine)
-
 # ============ Crear la Aplicación FastAPI ============
 app = FastAPI(
     title=settings.PROJECT_NAME,
