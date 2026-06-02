@@ -13,8 +13,9 @@ from app.db.database import get_db
 from app.schemas.user_schema import Token, UserCreate, UserLogin, UserResponse
 from app.services.auth_service import AuthService
 
-router = APIRouter(prefix="/auth", tags=["Autenticación"])
+from app.api.v1.dependencies import get_current_user
 
+router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 def register(
@@ -107,12 +108,11 @@ def login(
 
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(
-    current_user=Depends(lambda db=Depends(get_db): db),
+    current_user=Depends(get_current_user),
 ):
     """
     Devuelve la información del usuario actualmente autenticado.
 
     Requiere un JWT válido en el header Authorization.
     """
-    # Esto se rellenará cuando conectemos la dependencia de usuarios
-    pass
+    return current_user

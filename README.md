@@ -93,7 +93,13 @@ source venv/bin/activate  # En Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 6. Iniciar el Servidor de Desarrollo
+### 6. Ejecutar Migraciones de Base de Datos (Alembic)
+El proyecto usa Alembic para el control de versiones de la base de datos.
+```bash
+alembic upgrade head
+```
+
+### 7. Iniciar el Servidor de Desarrollo
 ```bash
 uvicorn app.main:app --reload
 ```

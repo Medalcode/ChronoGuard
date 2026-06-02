@@ -15,6 +15,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import settings
 from app.workers.scheduler import start_scheduler
 
+# ============ Crear Tablas en PostgreSQL ============
+# Eliminado: En su lugar, utilizaremos Alembic para gestionar las migraciones
 # ============ Crear la Aplicación FastAPI ============
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -75,14 +77,29 @@ async def shutdown_event():
     print(f"🛑 {settings.PROJECT_NAME} apagada")
 
 
+import jwt
+from fastapi.responses import JSONResponse
+
 # ============ Manejo de Errores Global ============
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_exception_handler(request, exc):
     """Captura errores de base de datos y los maneja correctamente."""
-    return {
-        "error": "Database error",
-        "detail": str(exc),
-    }
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Database error",
+            "detail": str(exc),
+        }
+    )
+
+@app.exception_handler(jwt.PyJWTError)
+async def jwt_exception_handler(request, exc):
+    """Captura errores de JWT (ej. token expirado o inválido)."""
+    return JSONResponse(
+        status_code=401,
+        content={"detail": "Token inválido o expirado", "error": str(exc)},
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 if __name__ == "__main__":

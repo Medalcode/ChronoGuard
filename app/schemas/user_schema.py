@@ -10,7 +10,7 @@ class UserCreate(BaseModel):
     Esquema para la creación de un nuevo usuario.
     Validaciones:
     - Email debe ser válido (usa EmailStr de Pydantic)
-    - Password mínimo 8 caracteres (recomendación de NIST)
+    - Password mínimo 8 caracteres (recomendación de NIST), incluyendo mayúsculas, minúsculas, números y símbolos.
     """
 
     email: EmailStr = Field(..., description="Correo electrónico único del usuario")
@@ -18,7 +18,8 @@ class UserCreate(BaseModel):
         ...,
         min_length=8,
         max_length=128,
-        description="Contraseña maestra (usada para autenticación y derivación de llave local AES-256)",
+        pattern=r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&._-])',
+        description="Contraseña maestra (usada para autenticación y derivación de llave local AES-256). Debe contener mayúscula, minúscula, número y un carácter especial.",
     )
 
 
