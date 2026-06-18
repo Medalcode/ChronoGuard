@@ -1,30 +1,46 @@
-#!/bin/bash
-# Windows Setup Script
-# Para PowerShell, ejecuta: .\setup.bat
+@echo off
+:: ChronoGuard - Quick Start Script for Windows
+:: Ejecuta con: .\setup.bat
 
-echo Starting ChronoGuard Setup...
+echo ====================================
+echo    ChronoGuard - Setup Inicial
+echo ====================================
 
-if not exist ".env" (
-    echo Creating .env file...
-    copy .env.example .env
-    echo Please edit .env and add a SECRET_KEY (generate with: openssl rand -hex 32)
+IF NOT EXIST ".env" (
+    echo [1/4] Creando archivo .env...
+    copy .env.example .env >nul
+    echo   ^> Edita .env y agrega una SECRET_KEY
+) ELSE (
+    echo [1/4] Archivo .env ya existe
 )
 
-if not exist "venv" (
-    echo Creating virtual environment...
+IF NOT EXIST "venv" (
+    echo [2/4] Creando entorno virtual...
     python -m venv venv
+) ELSE (
+    echo [2/4] Entorno virtual ya existe
 )
 
-echo Activating virtual environment...
+echo [3/4] Instalando dependencias...
 call venv\Scripts\activate.bat
+pip install -q -r requirements.txt
 
-echo Installing dependencies...
-pip install -r requirements.txt
-
-echo Starting PostgreSQL...
+echo [4/4] Levantando PostgreSQL...
 docker-compose up -d
 
 echo.
-echo Setup completed!
-echo Run "uvicorn app.main:app --reload" to start the server
-echo Access docs at http://localhost:8000/docs
+echo ====================================
+echo     SETUP COMPLETADO
+echo ====================================
+echo.
+echo Para iniciar el servidor:
+echo   uvicorn app.main:app --reload
+echo.
+echo Documentacion:
+echo   http://localhost:8000/docs
+echo.
+echo Para correr tests:
+echo   pytest tests/ -v
+echo.
+
+pause

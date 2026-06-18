@@ -12,9 +12,10 @@ Una plataforma de código abierto para gestionar activos digitales con liberaci�
 
 - **Dead Man's Switch Automatizado**: Monitoreo de inactividad con protocolo de liberación en cascada
 - **Criptografía Zero-Knowledge**: Cifrado simétrico AES-256 en el cliente - el servidor nunca sabe qué contiene la bóveda
-- **Seguridad Empresarial**: Hash bcrypt, JWT, auditoría completa de eventos
+- **Seguridad Empresarial**: Hash bcrypt, JWT, auditoría completa de eventos, rate limiting y bloqueo por intentos fallidos
 - **Escalable**: Arquitectura modular lista para crecer desde MVP a SaaS completo
-- **PostgreSQL**: Base de datos relacional robusta para integridad de datos críticos
+- **PostgreSQL + Alembic**: Base de datos relacional robusta con migraciones versionadas
+- **CI/CD Automatizado**: Tests, linting (ruff) y type-checking (mypy) en cada push
 
 ---
 
@@ -44,9 +45,11 @@ ChronoGuard/
 │   ├── workers/           # Tareas en segundo plano
 │   │   └── scheduler.py   # Dead Man's Switch - Evaluación diaria
 │   └── main.py            # Punto de entrada (FastAPI app)
-├── tests/                 # Pruebas con pytest
+├── alembic/               # Migraciones de BD versionadas (Alembic)
+├── tests/                 # Pruebas con pytest (13 tests)
 ├── requirements.txt       # Dependencias Python
 ├── .env.example          # Plantilla de variables de entorno
+├── .coveragerc           # Configuración de cobertura de tests
 ├── docker-compose.yml    # PostgreSQL local para desarrollo
 └── README.md
 ```
@@ -146,19 +149,29 @@ POST /api/v1/auth/register
 
 ---
 
-## 🧪 Testing
+## 🧪 Testing & Linting
 
 Ejecuta las pruebas unitarias:
 ```bash
-pytest tests/ -v
+ENVIRONMENT=test pytest tests/ -v
 ```
 
 Pruebas incluidas:
 - ✅ Health check del servidor
-- ✅ Registro de usuario
+- ✅ Registro de usuario (con creación automática de SwitchConfiguration)
 - ✅ Prevención de emails duplicados
-- ✅ Login e issuance de JWT
-- ✅ Validaciones de Pydantic
+- ✅ Login con JWT
+- ✅ Bloqueo de cuenta tras 5 intentos fallidos
+- ✅ Validación de fortaleza de contraseña
+- ✅ Rechazo de tokens inválidos/expirados
+- ✅ Cobertura mínima del 70%
+
+Linting y type-checking:
+```bash
+ruff check app/
+mypy app/ --ignore-missing-imports
+pytest tests/ --cov=app --cov-report=term-missing --cov-fail-under=70
+```
 
 ---
 
@@ -166,10 +179,13 @@ Pruebas incluidas:
 
 ### Fase 1: MVP de Título (Semestre 1)
 - [x] Arquitectura base con FastAPI
-- [ ] Endpoints de autenticación (register, login)
+- [x] Endpoints de autenticación (register, login, /me)
+- [x] Dead Man's Switch básico (scheduler + auditoría)
+- [x] Rate limiting y bloqueo de cuenta
+- [x] Migraciones Alembic
+- [x] CI/CD con linting, type-checking y cobertura
 - [ ] Endpoints de bóveda (crear, leer, eliminar activos cifrados)
-- [ ] Dead Man's Switch básico (monitoreo + notificaciones)
-- [ ] Pruebas unitarias
+- [ ] Notificaciones vía email (SMTP)
 
 ### Fase 2: SaaS Comercial (Post-Titulación)
 - [ ] Integración con Stripe/MercadoPago
@@ -198,6 +214,11 @@ SECRET_KEY=your-secret-key-here
 # Configuración del Dead Man's Switch
 DEFAULT_PING_INTERVAL_DAYS=7
 DEFAULT_TRIGGER_AFTER_DAYS=30
+
+# Seguridad de cuenta
+MAX_LOGIN_ATTEMPTS=5
+ACCOUNT_LOCKOUT_MINUTES=15
+RATE_LIMIT_PER_MINUTE=10
 
 # Emails (para enviar notificaciones)
 SMTP_HOST=smtp.mailtrap.io

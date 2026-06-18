@@ -1,52 +1,39 @@
+import re
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
-# ============ Esquema para Entrada de Datos (POST /register) ============
 class UserCreate(BaseModel):
-    """
-    Esquema para la creación de un nuevo usuario.
-    Validaciones:
-    - Email debe ser válido (usa EmailStr de Pydantic)
-    - Password mínimo 8 caracteres (recomendación de NIST), incluyendo mayúsculas, minúsculas, números y símbolos.
-    """
-
     email: EmailStr = Field(..., description="Correo electrónico único del usuario")
     password: str = Field(
         ...,
         min_length=8,
         max_length=128,
-        pattern=r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&._-])',
-        description="Contraseña maestra (usada para autenticación y derivación de llave local AES-256). Debe contener mayúscula, minúscula, número y un carácter especial.",
+        description="Contraseña maestra. Debe contener mayúscula, minúscula, número y un carácter especial.",
     )
 
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("La contraseña debe contener al menos una mayúscula")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("La contraseña debe contener al menos una minúscula")
+        if not re.search(r"\d", v):
+            raise ValueError("La contraseña debe contener al menos un número")
+        if not re.search(r"[@$!%*?&._-]", v):
+            raise ValueError("La contraseña debe contener al menos un carácter especial (@$!%*?&._-)")
+        return v
 
-# ============ Esquema para Entrada de Datos (POST /login) ============
+
 class UserLogin(BaseModel):
-    """
-    Esquema para la autenticación de un usuario.
-    """
-
     email: EmailStr = Field(..., description="Correo electrónico registrado")
     password: str = Field(..., description="Contraseña maestra")
 
 
-# ============ Esquema para Salida de Datos (Respuestas) ============
 class UserResponse(BaseModel):
-    """
-    Esquema para retornar datos del usuario.
-
-    NOTA CRÍTICA DE SEGURIDAD:
-    - Este esquema NO incluye password_hash (nunca exponemos hashes)
-    - SÍ incluye vault_salt (el frontend lo necesita para cifrado local)
-    - El ConfigDict(from_attributes=True) permite mapear modelos SQLAlchemy
-
-    La comisión evaluará que entiendes que "Zero-Knowledge" significa
-    que el servidor NO sabe qué datos guarda (pero sí genera la llave correctamente).
-    """
-
     id: UUID = Field(..., description="Identificador único del usuario")
     email: EmailStr = Field(..., description="Correo electrónico del usuario")
     is_active: bool = Field(..., description="Estado de la cuenta")
@@ -60,13 +47,7 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ============ Esquema para Token ============
 class Token(BaseModel):
-    """
-    Esquema para la respuesta de autenticación exitosa.
-    Contiene el JWT que el cliente debe incluir en los headers subsecuentes.
-    """
-
     access_token: str = Field(..., description="JWT para autenticación en requests futuros")
     token_type: str = Field(default="bearer", description="Tipo de token")
     vault_salt: str = Field(
